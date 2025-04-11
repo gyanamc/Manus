@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Recommender - India</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .header {
+            background-color: #0d6efd;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        .form-section {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .form-section h3 {
+            color: #0d6efd;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+            border-color: #0a58ca;
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .help-text {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .progress {
+            height: 10px;
+            margin-bottom: 30px;
+        }
+        .card-result {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .match-score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .match-reason {
+            background-color: #e9f2ff;
+            border-radius: 5px;
+            padding: 8px 12px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        .card-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .feature-badge {
+            background-color: #f8f9fa;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.85rem;
+        }
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        #results-section {
+            display: none;
+        }
+        .card-image {
+            max-height: 200px;
+            object-fit: contain;
+            margin: 0 auto;
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header text-center">
+        <div class="container">
+            <h1>Credit Card Recommender</h1>
+            <p class="lead">Find the perfect credit card based on your preferences</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="progress" id="progress-bar">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+
+        <form id="preference-form">
+            <!-- Step 1: Financial Information -->
+            <div class="form-section" id="step-1">
+                <h3>Financial Information</h3>
+                <div class="mb-3">
+                    <label for="annual-income" class="form-label">What is your annual income (in ₹)?</label>
+                    <input type="number" class="form-control" id="annual-income" min="0" required>
+                    <div class="help-text">This helps us recommend cards you're eligible for.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="employment-type" class="form-label">What is your employment status?</label>
+                    <select class="form-select" id="employment-type" required>
+                        <option value="" selected disabled>Select your employment status</option>
+                        <option value="Salaried">Salaried</option>
+                        <option value="Self-employed Professional">Self-employed Professional</option>
+                        <option value="Business Owner">Business Owner</option>
+                        <option value="Student">Student</option>
+                        <option value="Retired">Retired</option>
+                        <option value="Homemaker">Homemaker</option>
+                    </select>
+                    <div class="help-text">Different cards are designed for different employment types.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="credit-score" class="form-label">Do you know your credit score?</label>
+                    <select class="form-select" id="credit-score">
+                        <option value="Don't Know" selected>Don't Know</option>
+                        <option value="Below 650">Below 650</option>
+                        <option value="650-700">650-700</option>
+                        <option value="700-750">700-750</option>
+                        <option value="750-800">750-800</option>
+                        <option value="Above 800">Above 800</option>
+                    </select>
+                    <div class="help-text">Your credit score affects your eligibility for certain cards.</div>
+                </div>
+                <div class="step-navigation">
+                    <div></div>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(1, 2)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Demographic Information -->
+            <div class="form-section" id="step-2" style="display: none;">
+                <h3>Demographic Information</h3>
+                <div class="mb-3">
+                    <label for="age" class="form-label">What is your age?</label>
+                    <input type="number" class="form-control" id="age" min="18" max="100" required>
+                    <div class="help-text">You must be at least 18 years old to apply for most credit cards.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="residence-status" class="form-label">What is your residence status?</label>
+                    <select class="form-select" id="residence-status" required>
+                        <option value="" selected disabled>Select your residence status</option>
+                        <option value="Indian Resident">Indian Resident</option>
+                        <option value="NRI">NRI</option>
+                        <option value="Foreign National">Foreign National</option>
+                    </select>
+                    <div class="help-text">Some cards are only available to residents of India.</div>
+                </div>
+                <div class="step-navigation">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(2, 1)">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2, 3)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Spending Preferences -->
+            <div class="form-section" id="step-3" style="display: none;">
+                <h3>Spending Preferences</h3>
+                <div class="mb-3">
+                    <label class="form-label">What are your primary spending categories? (Select all that apply)</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Groceries" id="category-groceries">
+                        <label class="form-check-label" for="category-groceries">Groceries</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Dining" id="category-dining">
+                        <label class="form-check-label" for="category-dining">Dining</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Shopping" id="category-shopping">
+                        <label class="form-check-label" for="category-shopping">Shopping</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Travel" id="category-travel">
+                        <label class="form-check-label" for="category-travel">Travel</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Fuel" id="category-fuel">
+                        <label class="form-check-label" for="category-fuel">Fuel</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Entertainment" id="category-entertainment">
+                        <label class="form-check-label" for="category-entertainment">Entertainment</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Bill Payments" id="category-bills">
+                        <label class="form-check-label" for="category-bills">Bill Payments</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Online Shopping" id="category-online">
+                        <label class="form-check-label" for="category-online">Online Shopping</label>
+                    </div>
+                    <div class="help-text">We'll recommend cards with rewards for your spending habits.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="monthly-spend" class="form-label">What is your estimated monthly spend on credit cards (in ₹)?</label>
+                    <select class="form-select" id="monthly-spend" required>
+                        <option value="" selected disabled>Select your monthly spend</option>
+                        <option value="Less than ₹10,000">Less than ₹10,000</option>
+                        <option value="₹10,000 - ₹25,000">₹10,000 - ₹25,000</option>
+                        <option value="₹25,000 - ₹50,000">₹25,000 - ₹50,000</option>
+                        <option value="₹50,000 - ₹1,00,000">₹50,000 - ₹1,00,000</option>
+                        <option value="More than ₹1,00,000">More than ₹1,00,000</option>
+                    </select>
+                    <div class="help-text">Higher spending may qualify you for better rewards and benefits.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Do you frequently make international transactions?</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="international-transactions" id="international-yes" value="true">
+                        <label class="form-check-label" for="international-yes">Yes</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="international-transactions" id="international-no" value="false" checked>
+                        <label class="form-check-label" for="international-no">No</label>
+                    </div>
+                    <div class="help-text">Some cards offer better forex rates and international benefits.</div>
+                </div>
+                <div class="step-navigation">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(3, 2)">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3, 4)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Feature Preferences -->
+            <div class="form-section" id="step-4" style="display: none;">
+                <h3>Feature Preferences</h3>
+                <div class="mb-3">
+                    <label for="fee-preference" class="form-label">What is your preference regarding annual fees?</label>
+                    <select class="form-select" id="fee-preference" required>
+                        <option value="" selected disabled>Select your preference</option>
+                        <option value="No annual fee">No annual fee</option>
+                        <option value="Low annual fee with better benefits">Low annual fee with better benefits</option>
+                        <option value="Don't mind higher fees for premium benefits">Don't mind higher fees for premium benefits</option>
+                    </select>
+                    <div class="help-text">Many cards offer fee waivers based on spending thresholds.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="reward-preference" class="form-label">What type of rewards do you prefer?</label>
+                    <select class="form-select" id="reward-preference" required>
+                        <option value="" selected disabled>Select your preference</option>
+                        <option value="Cashback">Cashback</option>
+                        <option value="Reward Points">Reward Points</option>
+                        <option value="Air Miles">Air Miles</option>
+                        <option value="Discounts">Discounts</option>
+                        <option value="No preference">No preference</option>
+                    </select>
+                    <div class="help-text">Different cards offer different types of rewards.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="travel-frequency" class="form-label">How frequently do you travel?</label>
+                    <select class="form-select" id="travel-frequency" required>
+                        <option value="" selected disabled>Select your travel frequency</option>
+                        <option value="Rarely">Rarely</option>
+                        <option value="Occasionally">Occasionally</option>
+                        <option value="Frequently">Frequently</option>
+                    </select>
+                    <div class="help-text">Frequent travelers benefit from cards with travel perks.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="lounge-importance" class="form-label">How important is airport lounge access to you?</label>
+                    <select class="form-select" id="lounge-importance" required>
+                        <option value="" selected disabled>Select importance</option>
+                        <option value="Not important">Not important</option>
+                        <option value="Somewhat important">Somewhat important</option>
+                        <option value="Very important">Very important</option>
+                    </select>
+                    <div class="help-text">Many premium cards offer complimentary airport lounge access.</div>
+                </div>
+                <div class="step-navigation">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(4, 3)">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(4, 5)">Next</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Additional Preferences -->
+            <div class="form-section" id="step-5" style="display: none;">
+                <h3>Additional Preferences</h3>
+                <div class="mb-3">
+                    <label class="form-label">Do you have any preferred banks? (Select all that apply)</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="HDFC Bank" id="bank-hdfc">
+                        <label class="form-check-label" for="bank-hdfc">HDFC Bank</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="SBI Card" id="bank-sbi">
+                        <label class="form-check-label" for="bank-sbi">SBI Card</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="ICICI Bank" id="bank-icici">
+                        <label class="form-check-label" for="bank-icici">ICICI Bank</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="Axis Bank" id="bank-axis">
+                        <label class="form-check-label" for="bank-axis">Axis Bank</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="IDFC FIRST Bank" id="bank-idfc">
+                        <label class="form-check-label" for="bank-idfc">IDFC FIRST Bank</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="American Express" id="bank-amex">
+                        <label class="form-check-label" for="bank-amex">American Express</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="No preference" id="bank-none">
+                        <label class="form-check-label" for="bank-none">No preference</label>
+                    </div>
+                    <div class="help-text">Having an existing relationship with a bank may improve approval chances.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Do you currently have any credit cards?</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="existing-cards" id="existing-yes" value="true">
+                        <label class="form-check-label" for="existing-yes">Yes</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="existing-cards" id="existing-no" value="false" checked>
+                        <label class="form-check-label" for="existing-no">No</label>
+                    </div>
+                    <div class="help-text">This helps us recommend complementary cards.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="card-tier" class="form-label">What tier of credit card are you looking for?</label>
+                    <select class="form-select" id="card-tier">
+                        <option value="" selected>No preference</option>
+                        <option value="Basic/Entry-level">Basic/Entry-level</option>
+                        <option value="Gold/Classic">Gold/Classic</option>
+                        <option value="Platinum/Premium">Platinum/Premium</option>
+                        <option value="Super Premium/Signature/Infinite">Super Premium/Signature/Infinite</option>
+                    </select>
+                    <div class="help-text">Higher tier cards typically offer better benefits but have stricter eligibility criteria.</div>
+                </div>
+                <div class="step-navigation">
+                    <button type="button" class="btn btn-secondary" onclick="prevStep(5, 4)">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="getRecommendations()">Get Recommendations</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Results Section -->
+        <div id="results-section">
+            <div class="form-section">
+                <h3>Your Recommended Credit Cards</h3>
+                <p>Based on your preferences, here are the credit cards that best match your needs:</p>
+                <div id="recommendations-container">
+                    <!-- Recommendations will be inserted here -->
+                </div>
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-primary" onclick="resetForm()">Start Over</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p>Credit Card Recommender &copy; 2025 | Disclaimer: This is a recommendation tool only. Please verify all information with the card issuer before applying.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navigation between steps
+        function nextStep(currentStep, nextStep) {
+            // Validate current step
+            if (!validateStep(currentStep)) {
+                return;
+            }
+            
+            // Hide current step
+            document.getElementById(`step-${currentStep}`).style.display = 'none';
+            
+            // Show next step
+            document.getElementById(`step-${nextStep}`).style.display = 'block';
+            
+            // Update progress bar
+            updateProgressBar(nextStep);
+        }
+        
+        function prevStep(currentStep, prevStep) {
+            // Hide current step
+            document.getElementById(`step-${currentStep}`).style.display = 'none';
+            
+            // Show previous step
+            document.getElementById(`step-${prevStep}`).style.display = 'block';
+            
+            // Update progress bar
+            updateProgressBar(prevStep);
+        }
+        
+        function updateProgressBar(step) {
+            const totalSteps = 5;
+            const progress = (step - 1) / totalSteps * 100;
+            document.querySelector('.progress-bar').style.width = `${progress}%`;
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', progress);
+        }
+        
+        function validateStep(step) {
+            let isValid = true;
+            
+            switch(step) {
+                case 1:
+                    const annualIncome = document.getElementById('annual-income').value;
+                    const employmentType = document.getElementById('employment-type').value;
+                    
+                    if (!annualIncome) {
+                        alert('Please enter your annual income.');
+                        isValid = false;
+                    } else if (annualIncome < 0) {
+                        alert('Annual income cannot be negative.');
+                        isValid = false;
+                    }
+                    
+                    if (!employmentType) {
+                        alert('Please select your employment status.');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 2:
+                    const age = document.getElementById('age').value;
+                    const residenceStatus = document.getElementById('residence-status').value;
+                    
+                    if (!age) {
+                        alert('Please enter your age.');
+                        isValid = false;
+                    } else if (age < 18) {
+                        alert('You must be at least 18 years old to apply for most credit cards.');
+                        isValid = false;
+                    } else if (age > 100) {
+                        alert('Please enter a valid age.');
+                        isValid = false;
+                    }
+                    
+                    if (!residenceStatus) {
+                        alert('Please select your residence status.');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 3:
+                    const categories = document.querySelectorAll('input[type="checkbox"][id^="category-"]:checked');
+                    const monthlySpend = document.getElementById('monthly-spend').value;
+                    
+                    if (categories.length === 0) {
+                        alert('Please select at least one spending category.');
+                        isValid = false;
+                    }
+                    
+                    if (!monthlySpend) {
+                        alert('Please select your estimated monthly spend.');
+                        isValid = false;
+                    }
+                    break;
+                    
+                case 4:
+                    const feePreference = document.getElementById('fee-preference').value;
+                    const rewardPreference = document.getElementById('reward-preference').value;
+                    const travelFrequency = document.getElementById('travel-frequency').value;
+                    const loungeImportance = document.getElementById('lounge-importance').value;
+                    
+                    if (!feePreference) {
+                        alert('Please select your preference regarding annual fees.');
+                        isValid = false;
+                    }
+                    
+                    if (!rewardPreference) {
+                        alert('Please select your preferred reward type.');
+                        isValid = false;
+                    }
+                    
+                    if (!travelFrequency) {
+                        alert('Please select your travel frequency.');
+                        isValid = false;
+                    }
+                    
+                    if (!loungeImportance) {
+                        alert('Please select how important airport lounge access is to you.');
+                        isValid = false;
+                    }
+                    break;
+            }
+            
+            return isValid;
+        }
+        
+        // Get user preferences
+        function getUserPreferences() {
+            // Get spending categories
+            const categories = Array.from(document.querySelectorAll('input[type="checkbox"][id^="category-"]:checked')).map(checkbox => checkbox.value);
+            
+            // Get preferred banks
+            const banks = Array.from(document.querySelectorAll('input[type="checkbox"][id^="bank-"]:checked')).map(checkbox => checkbox.value);
+            
+            // Check if "No preference" is selected for banks
+            if (banks.includes('No preference')) {
+                banks.length = 0; // Clear the array
+            }
+            
+            // Get international transactions value
+            const internationalTransactions = document.querySelector('input[name="international-transactions"]:checked').value === 'true';
+            
+            // Get existing cards value
+            const existingCards = document.querySelector('input[name="existing-cards"]:checked').value === 'true';
+            
+            // Create user preferences object
+            return {
+                annual_income: parseFloat(document.getElementById('annual-income').value),
+                employment_type: document.getElementById('employment-type').value,
+                credit_score: document.getElementById('credit-score').value,
+                age: parseInt(document.getElementById('age').value),
+                residence_status: document.getElementById('residence-status').value,
+                primary_spending_categories: categories,
+                monthly_card_spend: document.getElementById('monthly-spend').value,
+                international_transactions: internationalTransactions,
+                fee_preference: document.getElementById('fee-preference').value,
+                reward_preference: document.getElementById('reward-preference').value,
+                travel_frequency: document.getElementById('travel-frequency').value,
+                lounge_access_importance: document.getElementById('lounge-importance').value,
+                preferred_banks: banks,
+                existing_cards: existingCards,
+                preferred_card_tier: document.getElementById('card-tier').value
+            };
+        }
+        
+        // Get recommendations
+        function getRecommendations() {
+            // Validate the last step
+            if (!validateStep(5)) {
+                return;
+            }
+            
+            // Get user preferences
+            const preferences = getUserPreferences();
+            
+            // Show loading indicator
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '<div class="text-center my-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">Finding the best credit cards for you...</p></div>';
+            
+            // Show results section
+            document.getElementById('preference-form').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('progress-bar').style.display = 'none';
+            
+            // Make API call to get recommendations
+            fetch('/api/recommend', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(preferences)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayRecommendations(data.recommendations);
+                } else {
+                    container.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            });
+        }
+        
+        // Display recommendations
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendations-container');
+            container.innerHTML = '';
+            
+            if (recommendations.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No credit cards match your preferences. Please try adjusting your criteria.</div>';
+                return;
+            }
+            
+            recommendations.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card-result';
+                
+                const matchScore = Math.min(100, Math.round(card.match_score * 10));
+                
+                cardElement.innerHTML = `
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>${card.card_name}</h4>
+                        <div class="match-score">${matchScore}% Match</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 text-center mb-3">
+                                <img src="${card.card_image_url}" alt="${card.card_name}" class="card-image mb-3">
+                                <a href="${card.apply_url}" target="_blank" class="btn btn-success w-100">Apply Now</a>
+                            </div>
+                            <div class="col-md-8">
+                                <p>${card.card_description}</p>
+                                <h5>Why this card matches your preferences:</h5>
+                                <div class="match-reasons mb-3">
+                                    ${card.match_reasons.map(reason => `<div class="match-reason">${reason}</div>`).join('')}
+                                </div>
+                                <h5>Key Features:</h5>
+                                <div class="card-features">
+                                    <span class="feature-badge">Issuer: ${card.issuer}</span>
+                                    <span class="feature-badge">Annual Fee: ₹${card.annual_fee}</span>
+                                    ${card.reward_rate > 0 ? `<span class="feature-badge">Reward Rate: ${card.reward_rate}X</span>` : ''}
+                                    ${card.cashback_rate > 0 ? `<span class="feature-badge">Cashback: ${card.cashback_rate}%</span>` : ''}
+                                    ${card.lounge_access ? `<span class="feature-badge">Lounge Access: ${card.lounge_access_count} visits/year</span>` : ''}
+                                    <span class="feature-badge">Card Tier: ${card.card_tier}</span>
+                                </div>
+                                
+                                <div class="accordion mt-4" id="accordion-${card.card_id}">
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-fees-${card.card_id}">
+                                                Fees & Charges
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-fees-${card.card_id}" class="accordion-collapse collapse" data-bs-parent="#accordion-${card.card_id}">
+                                            <div class="accordion-body">
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Joining Fee:</span>
+                                                        <span>₹${card.joining_fee}</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Annual Fee:</span>
+                                                        <span>₹${card.annual_fee}</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Interest Rate:</span>
+                                                        <span>${card.interest_rate}% p.a.</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Forex Markup:</span>
+                                                        <span>${card.forex_markup}%</span>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <span>Fee Waiver:</span>
+                                                        <span>${card.fee_waiver_condition || 'Not available'}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-benefits-${card.card_id}">
+                                                Benefits & Rewards
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-benefits-${card.card_id}" class="accordion-collapse collapse" data-bs-parent="#accordion-${card.card_id}">
+                                            <div class="accordion-body">
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item">
+                                                        <strong>Welcome Benefits:</strong>
+                                                        <p>${card.welcome_benefits || 'None'}</p>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <strong>Reward Categories:</strong>
+                                                        <p>${card.reward_categories.join(', ')}</p>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <strong>Travel Benefits:</strong>
+                                                        <p>${card.travel_benefits ? 'Yes' : 'No'}</p>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <strong>Dining Benefits:</strong>
+                                                        <p>${card.dining_benefits ? 'Yes' : 'No'}</p>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <strong>Shopping Benefits:</strong>
+                                                        <p>${card.shopping_benefits ? 'Yes' : 'No'}</p>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-eligibility-${card.card_id}">
+                                                Eligibility Criteria
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-eligibility-${card.card_id}" class="accordion-collapse collapse" data-bs-parent="#accordion-${card.card_id}">
+                                            <div class="accordion-body">
+                                                <ul class="list-group list-group-flush">
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Minimum Income:</span>
+                                                        <span>₹${card.min_income.toLocaleString('en-IN')}/year</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Minimum Age:</span>
+                                                        <span>${card.min_age} years</span>
+                                                    </li>
+                                                    <li class="list-group-item d-flex justify-content-between">
+                                                        <span>Credit Score Required:</span>
+                                                        <span>${card.credit_score_required}</span>
+                                                    </li>
+                                                    <li class="list-group-item">
+                                                        <span>Employment Types:</span>
+                                                        <span>${card.employment_type.join(', ')}</span>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(cardElement);
+            });
+        }
+        
+        // Reset form
+        function resetForm() {
+            document.getElementById('preference-form').reset();
+            document.getElementById('preference-form').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+            document.getElementById('progress-bar').style.display = 'block';
+            document.getElementById('step-1').style.display = 'block';
+            document.getElementById('step-2').style.display = 'none';
+            document.getElementById('step-3').style.display = 'none';
+            document.getElementById('step-4').style.display = 'none';
+            document.getElementById('step-5').style.display = 'none';
+            updateProgressBar(1);
+        }
+        
+        // Handle "No preference" bank checkbox
+        document.getElementById('bank-none').addEventListener('change', function() {
+            const bankCheckboxes = document.querySelectorAll('input[type="checkbox"][id^="bank-"]:not(#bank-none)');
+            
+            if (this.checked) {
+                bankCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.disabled = true;
+                });
+            } else {
+                bankCheckboxes.forEach(checkbox => {
+                    checkbox.disabled = false;
+                });
+            }
+        });
+        
+        // Initialize
+        updateProgressBar(1);
+    </script>
+</body>
+</html>
